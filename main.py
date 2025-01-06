@@ -7,10 +7,10 @@ from cardnode import CardNode
 
 ## CONTANTS ##
 
-DESIRED_NUMBER_OF_IMAGES = 10
+DESIRED_NUMBER_OF_IMAGES = 14
 DEFAULT_NUMBER_OF_IMAGES = 24 # Never change
-TOTAL_NUMBER_OF_CARDS_IN_SET = 7
-NUMBER_OF_IMAGES_IN_CARD = 3
+TOTAL_NUMBER_OF_CARDS_IN_SET = 21
+NUMBER_OF_IMAGES_IN_CARD = 5
 
 # This is used to optimize the code as to not need to generate prime numbers programatically up to 24 (the games original rules)
 # If the TOTAL_NUMBER_OF_IMAGES constant is HIGHER than 24, it generates more primes
@@ -96,8 +96,7 @@ def generate_random_card_array(number_images: int, total_number_of_images: int) 
 #   1.2. If not:
 #       1.2.1 Returns
 def check_new_card_against_card_nodes(current_node: CardNode, path: list[int], new_card: CardNode, level: int):
-    if new_card.value == current_node.value:
-        return
+    # print('New node: ' + str(new_card.value) + ' analyzed against current node: ' + str(current_node.value) + ' ---- ' + 'Level: ' + str(level))
     
     new_path = path + [current_node.value]
 
@@ -114,6 +113,16 @@ def check_new_card_against_card_nodes(current_node: CardNode, path: list[int], n
         current_node.children[-1].update_level(level)
     else:
         return
+    
+def write_sets_to_file(arr: list[list[int]], card_value: int, valids: bool = False):
+    with open(f'outputs/{card_value}.txt', 'w') as f:
+        for sub_array in arr:
+            if valids:
+                if len(sub_array) == NUMBER_OF_IMAGES_IN_CARD:
+                    f.write(f"{len(sub_array)} {sub_array}\n")
+            else:
+                f.write(f"{len(sub_array)} {sub_array}\n")
+
 
 def main():
     start = time.time()
@@ -131,7 +140,6 @@ def main():
     # bar = progressbar.ProgressBar(widgets=widgets, max_value=max_value).start()
 
     analyze_prime_vector(DESIRED_NUMBER_OF_IMAGES)
-    print('Prime Numbers: ' + str(PRIME_NUMBERS))    
 
     # Initiates the Binary Tree of Cards, where each path to a leaf is a different set of cards
     root = None
@@ -164,13 +172,19 @@ def main():
             level = 0,
         )
 
-        print('Count: ' + str(count) + ' ---- ' + 'Binary Number: ' + str(binary_number))
-        print('Current Card: ' + str(current_card.value))
+        # print('Count: ' + str(count) + ' ---- ' + 'Binary Number: ' + str(binary_number))
+        # print('Current Card: ' + str(current_card.value))
         count += 1
         # bar.update(count)
         # print(root.get_paths_sizes())
         # print(root.get_paths_to_leaves())
         # input("Press Enter to continue...")
+    
+    write_sets_to_file(
+        arr = root.get_paths_to_leaves(),
+        card_value = root.value,
+        valids = True
+    )
     
     end = time.time()
     elapsed_time = end - start
