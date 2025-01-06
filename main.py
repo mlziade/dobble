@@ -1,14 +1,16 @@
 import math
 import time
 import itertools
-from random import randint
+import progressbar
+from random import randint, sample
+from cardnode import CardNode
 
 ## CONTANTS ##
 
-DESIRED_NUMBER_OF_IMAGES = 24
-DEFAULT_NUMBER_OF_IMAGES = 24
-TOTAL_NUMBER_OF_CARDS_IN_SET = 52
-NUMBER_OF_IMAGES_IN_CARD = 7
+DESIRED_NUMBER_OF_IMAGES = 15
+DEFAULT_NUMBER_OF_IMAGES = 24 # Never change
+TOTAL_NUMBER_OF_CARDS_IN_SET = 7
+NUMBER_OF_IMAGES_IN_CARD = 3
 
 # This is used to optimize the code as to not need to generate prime numbers programatically up to 24 (the games original rules)
 # If the TOTAL_NUMBER_OF_IMAGES constant is HIGHER than 24, it generates more primes
@@ -40,16 +42,16 @@ def generate_primes_sieve_of_eratosthenes(target_num_of_primes: int) -> list[int
     return list_of_primes
 
 # Alters the prime numbers vector based on the constants values and alters if necessary
-def analyze_prime_vector(total_num_of_images: int):
+def analyze_prime_vector(total_num_of_images: int) -> None:
     global PRIME_NUMBERS
     if len(PRIME_NUMBERS) < DEFAULT_NUMBER_OF_IMAGES:
         PRIME_NUMBERS = PRIME_NUMBERS[:DESIRED_NUMBER_OF_IMAGES]
     elif len(PRIME_NUMBERS) > DEFAULT_NUMBER_OF_IMAGES:
         PRIME_NUMBERS = generate_primes_sieve_of_eratosthenes(total_num_of_images)
 
-def transform_card_tuple_into_product_of_primes(card_tuple: tuple[int]) -> int:
+def transform_card_tuple_into_product_of_primes(cards: tuple[int] | list[int]) -> int:
     product = 1
-    for index, column in enumerate(card_tuple):
+    for index, column in enumerate(cards):
         if column == 1:
             product *= PRIME_NUMBERS[index]
     return product
@@ -62,6 +64,7 @@ def reverse_product_of_primes_into_card_tuple(product: int) -> list[int]:
             product = product / prime
     return card
 
+# Generates a total of 2^n - 1 numbers, where n is the number of digits
 def iterative_binary_generator(number_of_digits: int):
     for i in range(2**number_of_digits):  # Iterate through all numbers from 0 to 2^n - 1
         binary = []
@@ -72,49 +75,104 @@ def iterative_binary_generator(number_of_digits: int):
 def check_gcd(a: int, b: int) -> int:
     return math.gcd(a,b)
 
-def print_cards_formatted(matrix: list[list[int]]):
-     for row in matrix:
-        print(" ".join(map(str, row)))
+def generate_random_card_array(number_images: int, total_number_of_images: int) -> list[int]:
+    if number_images > total_number_of_images:
+        raise ValueError("number_images cannot exceed total_number_of_images.")
+
+    card = [0] * total_number_of_images
+
+    ones_positions = sample(range(total_number_of_images), number_images)
+
+    for pos in ones_positions:
+        card[pos] = 1
+
+    return card
+
+# Recursive method that goes through all CardNodes, and for each:
+# 1. Checks if the current_node path accepts the new card
+#   1.1. If it accepts:
+#       1.1.1 Calls yourself on children
+#       1.1.2 Adds new card to node
+#   1.2. If not:
+#       1.2.1 Returns
+def check_new_card_against_card_nodes(current_node: CardNode, path: list[int], new_card: CardNode, level: int):
+    new_path = path + [current_node.value]
+
+    # Use map to calculate the GCD of each card with current_card, and transform it into list
+    gcds = map(lambda card: check_gcd(card, new_card.value), new_path)
+    gcd_list = list(gcds)
+    # print('List of gcds: [' + ', '.join(map(str, gcd_list)) + ']')
+    # If at least one of the gcds is not a prime, than that card dosnt fit in the current set
+    if set(gcd_list).issubset(PRIME_NUMBERS):
+        if len(current_node.children) > 0:
+            for child in current_node.children:
+                check_new_card_against_card_nodes(child, new_path, new_card, level + 1)
+        current_node.add_card(new_card)
+        current_node.children[-1].update_level(level)
+    else:
+        return
 
 def main():
     start = time.time()
-    # Creates a set of cards to have a 0(1) look-up cost
-    set_of_cards: set[int] = set()
+
+    # widgets = [
+    #     ' [', 
+    #     progressbar.widgets.Timer(format='elapsed time: %(elapsed)s'), 
+    #     '] ', 
+    #     progressbar.widgets.Bar('*'), 
+    #     ' (', 
+    #     progressbar.widgets.ETA(), 
+    #     ') ',
+    # ]
+    # max_value = pow(2, DESIRED_NUMBER_OF_IMAGES) - 1  # Assuming this is a valid number of iterations
+    # bar = progressbar.ProgressBar(widgets=widgets, max_value=max_value).start()
+
+    analyze_prime_vector(DESIRED_NUMBER_OF_IMAGES)
+    print('Prime Numbers: ' + str(PRIME_NUMBERS))    
+
+    # Initiates the Binary Tree of Cards, where each path to a leaf is a different set of cards
+    root = None
+
+    # Give root a random card
+    root = CardNode(
+        value = transform_card_tuple_into_product_of_primes(
+            generate_random_card_array(
+                NUMBER_OF_IMAGES_IN_CARD, DESIRED_NUMBER_OF_IMAGES
+            )
+        )
+    )
+    root.update_level(0)
 
     count = 0
     for binary_number in iterative_binary_generator(DESIRED_NUMBER_OF_IMAGES):
         # If it has a different number of 1's, its a invalid card
         if binary_number.count(1) != NUMBER_OF_IMAGES_IN_CARD:
+            count += 1
             continue
 
-        current_card = transform_card_tuple_into_product_of_primes(binary_number)
-        # If its the first card, add it
-        if len(set_of_cards) == 0:
-            set_of_cards.add(current_card)
-        # If the set is full, break the loop
-        elif len(set_of_cards) == TOTAL_NUMBER_OF_CARDS_IN_SET:
-            break
-        # Verify if the card can be added to the set
-        else:            
-            # Use map to calculate the GCD of each card with current_card, and transform it into list
-            gcds = map(lambda card: check_gcd(card, current_card), set_of_cards)
-            gcd_list = list(gcds)
-            # print('List of gcds: [' + ', '.join(map(str, gcd_list)) + ']')
-            # If at least one of the gcds is not a prime, than that card dosnt fit in the current set
-            if set(gcd_list).issubset(PRIME_NUMBERS):
-                set_of_cards.add(current_card)
-        
-        # print('Count: ' + str(count) + ' ---- ' + 'Binary Number: ' + str(binary_number))
-        # print('Current Card: ' + str(current_card))
+        current_card: CardNode = CardNode(
+            value = transform_card_tuple_into_product_of_primes(binary_number)
+        )
+
+        check_new_card_against_card_nodes(
+            current_node = root,
+            path = list(),
+            new_card = current_card,
+            level = 0,
+        )
+
+        print('Count: ' + str(count) + ' ---- ' + 'Binary Number: ' + str(binary_number))
+        print('Current Card: ' + str(current_card.value))
         count += 1
+        # bar.update(count)
+        # print(root.get_paths_to_leaves())
     
-    final_cards_as_matrix = list(map(reverse_product_of_primes_into_card_tuple, set_of_cards))
-    print('Final set of cards:')
-    print_cards_formatted(final_cards_as_matrix)
+    # print(render_path_tree(root))
     
     end = time.time()
     elapsed_time = end - start
     print('Program Time: ' + str(elapsed_time))
+    # bar.finish()
 
 if __name__ == "__main__":
     main()

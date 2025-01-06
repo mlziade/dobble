@@ -4,10 +4,38 @@
 
 Create a set of cards that contains a number of images. Each card can have only one image in common with any other card of the set
 
-## Rules
+## Definitions & Equations
 
-- The set of images needs to be bigger than 2 
-- 
+1. Number of Symbols per Card (**n**)
+
+This is the number of unique symbols present on each card. It is an adjustable parameter but must be consistent across all cards.
+
+2. Number of Cards (**m**)
+
+This refers to how many cards are in the deck. The number of cards is determined by the number of symbols per card and is calculated using a combinatorial design.
+
+3. Total Number of Symbols (**S**)
+
+This is the total number of unique symbols available for use in the deck. It is typically set at the beginning, and the deck configuration must ensure that the total number of symbols used does not exceed this value.
+
+4. Equations
+
+    - Number of Cards (m):
+
+        $m = n^2 - n + 1$
+
+        where *n* is the number of symbols per card.
+
+    - Total Symbols Used:
+
+        $n \times m$
+
+        Ensure this is less than or equal to the total available symbols SS.
+
+    - Constraint:
+
+        $n \times m \leq S$
+
 
 ## Algorithm
 
