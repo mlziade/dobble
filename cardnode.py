@@ -1,4 +1,5 @@
 import math
+import copy
 
 class CardNode:
     
@@ -12,7 +13,7 @@ class CardNode:
         self.level = level
     
     def add_card(self, child):
-        self.children.append(child)
+        self.children.append(copy.deepcopy(child))
         self.is_leaf = False
 
     def print_card(self):
