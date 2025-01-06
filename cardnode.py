@@ -18,7 +18,12 @@ class CardNode:
     def print_card(self):
         print('Card: ' + str(self.value))
 
-    def get_paths_to_leaves(self):
+    def get_paths_sizes(self) -> list[int]:
+        paths = []
+        self._dfs(self, [], paths)
+        return list(map(len, paths))
+
+    def get_paths_to_leaves(self) -> list[list[int]]:
         paths = []
         self._dfs(self, [], paths)
         return paths

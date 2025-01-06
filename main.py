@@ -7,7 +7,7 @@ from cardnode import CardNode
 
 ## CONTANTS ##
 
-DESIRED_NUMBER_OF_IMAGES = 15
+DESIRED_NUMBER_OF_IMAGES = 10
 DEFAULT_NUMBER_OF_IMAGES = 24 # Never change
 TOTAL_NUMBER_OF_CARDS_IN_SET = 7
 NUMBER_OF_IMAGES_IN_CARD = 3
@@ -44,9 +44,9 @@ def generate_primes_sieve_of_eratosthenes(target_num_of_primes: int) -> list[int
 # Alters the prime numbers vector based on the constants values and alters if necessary
 def analyze_prime_vector(total_num_of_images: int) -> None:
     global PRIME_NUMBERS
-    if len(PRIME_NUMBERS) < DEFAULT_NUMBER_OF_IMAGES:
+    if DESIRED_NUMBER_OF_IMAGES < DEFAULT_NUMBER_OF_IMAGES:
         PRIME_NUMBERS = PRIME_NUMBERS[:DESIRED_NUMBER_OF_IMAGES]
-    elif len(PRIME_NUMBERS) > DEFAULT_NUMBER_OF_IMAGES:
+    elif DESIRED_NUMBER_OF_IMAGES > DEFAULT_NUMBER_OF_IMAGES:
         PRIME_NUMBERS = generate_primes_sieve_of_eratosthenes(total_num_of_images)
 
 def transform_card_tuple_into_product_of_primes(cards: tuple[int] | list[int]) -> int:
@@ -96,6 +96,9 @@ def generate_random_card_array(number_images: int, total_number_of_images: int) 
 #   1.2. If not:
 #       1.2.1 Returns
 def check_new_card_against_card_nodes(current_node: CardNode, path: list[int], new_card: CardNode, level: int):
+    if new_card.value == current_node.value:
+        return
+    
     new_path = path + [current_node.value]
 
     # Use map to calculate the GCD of each card with current_card, and transform it into list
@@ -165,9 +168,9 @@ def main():
         print('Current Card: ' + str(current_card.value))
         count += 1
         # bar.update(count)
+        # print(root.get_paths_sizes())
         # print(root.get_paths_to_leaves())
-    
-    # print(render_path_tree(root))
+        # input("Press Enter to continue...")
     
     end = time.time()
     elapsed_time = end - start
