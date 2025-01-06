@@ -20,7 +20,7 @@ This is the total number of unique symbols available for use in the deck. It is 
 
 4. Equations
 
-    - Number of Cards (m):
+    - Number of Cards (**m**):
 
         $m = n^2 - n + 1$
 
@@ -30,7 +30,7 @@ This is the total number of unique symbols available for use in the deck. It is 
 
         $n \times m$
 
-        Ensure this is less than or equal to the total available symbols SS.
+        Ensure this is less than or equal to the total available symbols *S*.
 
     - Constraint:
 
